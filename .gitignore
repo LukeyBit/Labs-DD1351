@@ -1,0 +1,31 @@
+# LaTeX intermediate and output files
+*.aux
+*.bbl
+*.blg
+*.brf
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.dvi
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# PDF files
+*.pdf
+
+# Backup files
+*~
+*.bak
+*.backup
+*.tmp
+*.swp
+*.swo
+
+# Directory for auxiliary files
+aux/
+*.pygtex
+*.pygstyle
