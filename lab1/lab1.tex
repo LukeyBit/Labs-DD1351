@@ -104,4 +104,24 @@ osv.
 (Notera att t.ex. \texttt{E=[1,2,4]}, \texttt{L=3} ska inte finnas med som svar, 
 då 2 och 4 inte finns konsekutivt i listan \texttt{[1,2,3,4]}.)
 
+\subsection*{Lösning}
+
+\begin{minted}{prolog}
+partstring(List, L, F) :-
+    subsequence(List, F),
+    length(F, L).
+
+subsequence([], []).
+subsequence([H|T], [H|SubT]) :-
+    prefix(SubT, T).
+subsequence([_|T], SubT) :-
+    subsequence(T, SubT).
+
+prefix([], _).
+prefix([H|T], [H|Rest]) :-
+    prefix(T, Rest).
+\end{minted}
+
+Huvudpredikatet \texttt{partstring/3} anropar hjälpredikatet \texttt{subsequence/2} som för varje siffra i listan genererar alla sekvenser som börjar med den siffran. Detta görs med hjälp av ännu ett hjälpredikat, \texttt{prefix/2}, som genererar alla sekvenser som en given siffra är ett prefix till. På varje sekvens som genereras kollar vi sedan längden och returnerar sekvensen och dess längd om den är konsekutiv.
+
 \end{document}
