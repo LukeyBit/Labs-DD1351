@@ -124,4 +124,48 @@ prefix([H|T], [H|Rest]) :-
 
 Huvudpredikatet \texttt{partstring/3} anropar hjälpredikatet \texttt{subsequence/2} som för varje siffra i listan genererar alla sekvenser som börjar med den siffran. Detta görs med hjälp av ännu ett hjälpredikat, \texttt{prefix/2}, som genererar alla sekvenser som en given siffra är ett prefix till. På varje sekvens som genereras kollar vi sedan längden och returnerar sekvensen och dess längd om den är konsekutiv.
 
+\section*{Uppgift 4: Representation}
+
+Du skall definiera ett program som arbetar med grafer.
+
+Föreslå en representation av grafer så att varje nod har ett 
+unikt namn (en konstant) och grannarna finns indikerade. 
+
+Definiera ett predikat som med denna representation och utan 
+att fastna i en loop tar fram en väg som en lista av namnen på 
+noderna i den ordning de passeras när man utan att passera 
+en nod mer än en gång går från nod A till nod B!
+Finns det flera möjliga vägar skall de presenteras 
+en efter en, om man begär det.
+
+\subsection*{Lösning}
+
+\begin{minted}{prolog}
+% Representation av grafen
+line(a, b).
+line(a, c).
+line(b, c).
+line(b, a).
+line(b, e).
+line(c, d).
+line(d, e).
+
+path(Start, End, ReversePath) :-
+    travel(Start, End, [Start], Path),
+    reverse(ReversePath, Path). % Vänd på listan eftersom vi lägger
+                                % till noder i början av listan
+
+% Hjälppredikatet travel/4
+% Fall 1: Vi har nått nod End, bygg vägen
+travel(Start, End, Visited, [End|Visited]) :-
+    line(Start, End).
+
+% Fall 2: Vi har inte nått nod End, fortsätt att söka vägar
+travel(Start, End, Visited, Path) :- 
+    line(Start, Next),
+    Next \= End,
+    \+ member(Next, Visited),
+    travel(Next, End, [Next|Visited], Path).
+\end{minted}
+
 \end{document}
