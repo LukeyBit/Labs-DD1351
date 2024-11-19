@@ -1,8 +1,9 @@
-% Read input file and verify proof
+% Verify the proof from the input file
 verify(InputFileName) :-
     see(InputFileName),
     read(Prems), read(Goal), read(Proof),
     seen,
+    % write('Premises after reading: '), writeln(Prems),
     valid_proof(Prems, Goal, Proof).
 
 % Check if the proof is valid
@@ -14,113 +15,95 @@ valid_proof(Prems, Goal, Proof) :-
 
 % Check each line of the proof
 check_proof([], _, _).
-check_proof([[_, Formula, Rule] | Rest], Prems, Context) :-
-    % Debugging output
-    write('Checking: '), write(Formula), write(' with rule: '), writeln(Rule),
-    % Validate the current line
-    valid_rule(Formula, Rule, Prems, Context),
-    % Continue checking the rest of the proof
-    check_proof(Rest, Prems, [Formula | Context]).
-check_proof([box(Assumption, SubProof) | Rest], Prems, Context) :-
-    % Check the sub-proof within the box
-    check_subproof(SubProof, Prems, [Assumption | Context]),
-    % Continue checking the rest of the proof
-    check_proof(Rest, Prems, Context).
-
-% Check each line of the sub-proof
-check_subproof([], _, _).
-check_subproof([[_, Formula, Rule] | Rest], Prems, Context) :-
-    % Debugging output for sub-proofs
-    write('Checking sub-proof: '), write(Formula), write(' with rule: '), writeln(Rule),
-    % Validate the current line in the sub-proof
-    valid_rule(Formula, Rule, Prems, Context),
-    % Continue checking the rest of the sub-proof
-    check_subproof(Rest, Prems, [Formula | Context]).
+check_proof([Row | Rest], Prems, Previous) :-
+    % write('Checking: '), write(Formula), write(' with rule: '), writeln(Rule),
+    valid_rule(Row, Prems, Previous),
+    check_proof(Rest, Prems, [Row | Previous]).
 
 % Define valid rules
 
-% Premise: The formula must be one of the premises
-valid_rule(Formula, premise, Prems, _) :-
+% Premise rule: Ensure formula is in premises
+valid_rule([_, Formula, premise], Prems, _) :-
     member(Formula, Prems).
 
-% Assumption: The formula must be in the current context
-valid_rule(Formula, assumption, _, Context) :-
-    member(Formula, Context).
+% Assumption rule
+% Calls check_proof on assumption box
+valid_rule([[Line, Formula, assumption] | Box], Prems, Previous) :-
+    check_proof(Box, Prems, [[Line, Formula, assumption] | Previous]).
 
-% Conjunction Introduction (∧i): Combine two formulas into a conjunction
-valid_rule(and(A, B), andint(LineA, LineB), _, Context) :-
-    nth1(LineA, Context, A),
-    nth1(LineB, Context, B).
+% Copy rule: Copy a formula from a previous line in the proof
+valid_rule([_, Formula, copy(Line)], _, Previous) :-
+    member([Line, Formula, _], Previous).
 
-% Conjunction Elimination (∧e): Extract the first part of a conjunction
-valid_rule(A, andel1(Line), _, Context) :-
-    nth1(Line, Context, and(A, _)).
+% Implication Introduction (→i)
+valid_rule([_, imp(Formula1, Formula2), impint(Line1, Line2)], _, Previous) :-
+    member([[Line1, Formula1, assumption] | Box], Previous),
+    last([[Line1, Formula1, assumption] | Box], [Line2, Formula2, _]).
 
-% Conjunction Elimination (∧e): Extract the second part of a conjunction
-valid_rule(B, andel2(Line), _, Context) :-
-    nth1(Line, Context, and(_, B)).
+% Implication Elimination (→e)
+valid_rule([_, Formula2, impel(Line1, Line2)], _, Previous) :-
+    member([Line1, Formula1, _], Previous),
+    member([Line2, imp(Formula1, Formula2), _], Previous).
 
-% Disjunction Introduction (∨i): Introduce a disjunction with the first part
-valid_rule(or(A, _), orint1(Line), _, Context) :-
-    nth1(Line, Context, A).
+% And introduction rule
+valid_rule([_, and(Formula1, Formula2), andint(Line1, Line2)], _, Previous) :-
+    member([Line1, Formula1, _], Previous),
+    member([Line2, Formula2, _], Previous).
 
-% Disjunction Introduction (∨i): Introduce a disjunction with the second part
-valid_rule(or(_, B), orint2(Line), _, Context) :-
-    nth1(Line, Context, B).
+% And elimination rules
+valid_rule([_, Formula, andel1(Line)], _, Previous) :-
+    member([Line, and(Formula, _), _], Previous).
 
-% Disjunction Elimination (∨e): Eliminate a disjunction by proving both cases
-valid_rule(C, orel(LineDisj, LineA, LineB, LineC, LineD), _, Context) :-
-    nth1(LineDisj, Context, or(A, B)),
-    nth1(LineA, Context, A),
-    nth1(LineB, Context, C),
-    nth1(LineC, Context, B),
-    nth1(LineD, Context, C).
+valid_rule([_, Formula, andel2(Line)], _, Previous) :-
+    member([Line, and(_, Formula), _], Previous).
 
-% Implication Introduction (→i): Introduce an implication from an assumption
-valid_rule(imp(A, B), impint(LineA, LineB), _, Context) :-
-    nth1(LineA, Context, A),
-    nth1(LineB, Context, B).
+% Or introduction rules
+valid_rule([_, or(Formula, _), orint1(Line)], _, Previous) :-
+    member([Line, Formula, _], Previous).
 
-% Implication Elimination (→e): Apply an implication to derive a conclusion
-valid_rule(B, impel(LineA, LineImp), _, Context) :-
-    nth1(LineA, Context, A),
-    nth1(LineImp, Context, imp(A, B)).
+valid_rule([_, or(_, Formula), orint2(Line)], _, Previous) :-
+    member([Line, Formula, _], Previous).
 
-% Negation Introduction (¬i): Introduce a negation from a contradiction
-valid_rule(neg(A), negint(LineA, LineCont), _, Context) :-
-    nth1(LineA, Context, A),
-    nth1(LineCont, Context, cont).
+% Or elimination rule
+valid_rule([_, Formula3, orel(Line1, Line2, Line3, Line4, Line5)], _, Previous) :-
+    member([Line1, or(Formula1, Formula2), _], Previous),
+    member([[Line2, Formula1, assumption] | Box1], Previous),
+    last([Line3, Formula3, _], Box1),
+    member([[Line4, Formula2, assumption] | Box2], Previous),
+    last([Line5, Formula3, _], Box2).
 
-% Negation Elimination (¬e): Derive a contradiction from a formula and its negation
-valid_rule(cont, negel(LineA, LineNegA), _, Context) :-
-    nth1(LineA, Context, A),
-    nth1(LineNegA, Context, neg(A)).
+% Negation introduction rule
+valid_rule([_, neg(Formula), negint(Line1, Line2)], _, Previous) :-
+    member([[Line1, Formula, assumption] | Box], Previous),
+    last([Line2, cont, _], Box).
 
-% Double Negation Introduction (¬¬i): Introduce a double negation
-valid_rule(neg(neg(A)), negnegint(Line), _, Context) :-
-    nth1(Line, Context, A).
+% Negation elimination rule
+valid_rule([_, cont, negel(Line1, Line2)], _, Previous) :-
+    member([Line1, Formula, _], Previous),
+    member([Line2, neg(Formula), _], Previous).
 
-% Double Negation Elimination (¬¬e): Eliminate a double negation
-valid_rule(A, negnegel(Line), _, Context) :-
-    nth1(Line, Context, neg(neg(A))).
+% Contradiction elimination rule
+valid_rule([_, _, contel(Line)], _, Previous) :-
+    member([Line, cont, _], Previous).
 
-% Contradiction Elimination (⊥e): Derive any formula from a contradiction
-valid_rule(_, contel(Line), _, Context) :-
-    nth1(Line, Context, cont).
+% Double negation introduction rule
+valid_rule([_, neg(neg(Formula)), negnegint(Line)], _, Previous) :-
+    member([Line, Formula, _], Previous).
 
-% Law of Excluded Middle (LEM): Introduce a disjunction of a formula and its negation
-valid_rule(or(A, neg(A)), lem, _, _).
+% Double negation elimination rule
+valid_rule([_, Formula, negnegel(Line)], _, Previous) :-
+    member([Line, neg(neg(Formula)), _], Previous).
 
-% Modus Tollens (MT): Derive a negation from an implication and the negation of the conclusion
-valid_rule(neg(A), mt(LineImp, LineNegB), _, Context) :-
-    nth1(LineImp, Context, imp(A, B)),
-    nth1(LineNegB, Context, neg(B)).
+% Modus tollens (MT) rule
+valid_rule([_, neg(Formula1), mt(Line1, Line2)], _, Previous) :-
+    member([Line1, imp(Formula1, Formula2), _], Previous),
+    member([Line2, neg(Formula2), _], Previous).
 
-% Proof by Contradiction (PBC): Derive a formula from the negation leading to a contradiction
-valid_rule(A, pbc(LineNegA, LineCont), _, Context) :-
-    nth1(LineNegA, Context, neg(A)),
-    nth1(LineCont, Context, cont).
+% Proof By Cases (PBC) rule
+valid_rule([_, Formula, pbc(Line1, Line2)], _, Previous) :-
+    member([[Line1, neg(Formula), assumption] | Box], Previous),
+    member([Line2, cont, _], Box),
+    last([Line2, cont, _], Box).
 
-% Copy Rule: Copy a formula from a previous line
-valid_rule(A, copy(Line), _, Context) :-
-    nth1(Line, Context, A).
+% Law Of Excluded Middle (LEM) rule
+valid_rule([_, or(Formula, neg(Formula)), lem], _, _).
