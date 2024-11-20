@@ -16,7 +16,7 @@ valid_proof(Prems, Goal, Proof) :-
 % Check each line of the proof
 check_proof([], _, _).
 check_proof([Row | Rest], Prems, Previous) :-
-    % write('Checking: '), write(Formula), write(' with rule: '), writeln(Rule),
+    %write('Checking: '), writeln(Row),
     valid_rule(Row, Prems, Previous),
     check_proof(Rest, Prems, [Row | Previous]).
 
@@ -99,7 +99,7 @@ valid_rule([_, neg(Formula1), mt(Line1, Line2)], _, Previous) :-
     member([Line1, imp(Formula1, Formula2), _], Previous),
     member([Line2, neg(Formula2), _], Previous).
 
-% Proof By Cases (PBC) rule
+% Proof By Contradiction (PBC) rule
 valid_rule([_, Formula, pbc(Line1, Line2)], _, Previous) :-
     member([[Line1, neg(Formula), assumption] | Box], Previous),
     member([Line2, cont, _], Box),
