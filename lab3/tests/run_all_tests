@@ -14,4 +14,4 @@ fi
 
 
 
-prolog --query-goal "['run_all_tests.pl'], run_all_tests('$1')"
+prolog -g "['run_all_tests.pl'], run_all_tests('$1')"
