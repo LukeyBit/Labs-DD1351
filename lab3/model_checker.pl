@@ -30,7 +30,14 @@ verify(Input) :-
     check(T, L, S, [], F).
 
 
-% Literals/atoms (numbers and strings with first character in lower case)
+% AX (All Next): Sant i alla direkta efterföljande tillstånd.
+% EX (Exists Next): Sant i minst ett direkt efterföljande tillstånd.    
+% AF (All Finally): Kommer att vara sant någon gång i framtiden på alla vägar.    
+% EF (Exists Finally): Kommer att vara sant någon gång i framtiden på minst en väg.    
+% AG (All Globally): Alltid sant på alla vägar.    
+% EG (Exists Globally): Alltid sant på minst en väg.
+
+% Literals/atoms are true if they are in the labeling of the current state
 check(_, L, S, [], Literal) :- 
     state_variables(L, S, Variables),
     member(Literal, Variables).
