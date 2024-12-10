@@ -60,18 +60,18 @@ check(T, L, S, [], or(Statement1, Statement2)) :-
     check(T, L, S, [], Statement2).
 
 
-% AX q - q is true in the next state
+% AX - Check if statement is true in all adjacent states
 check(T, L, S, [], ax(Statement)) :-
     state_variables(T, S, Adjacent_states),
     verify_all_adjacent(T, L, Adjacent_states, [], Statement).
 
-% EX q - q is true in some next state
+% EX - Check if statement is true in at least one adjacent state
 check(T, L, S, [], ex(Statement)) :-
     state_variables(T, S, Adjacent_states),
     verify_atleast_one_adjacent(T, L, Adjacent_states, [], Statement).
     
 
-% AG q - q is true in every state in every path
+% AG - Check if statement is true in all states in the path
 check(_, _, S, Previous, ag(_)) :-
     member(S, Previous).
 
@@ -81,7 +81,7 @@ check(T, L, S, Previous, ag(Statement)) :-
     state_variables(T, S, Adjacent_states),
     verify_all_adjacent(T, L, Adjacent_states, [S|Previous], ag(Statement)).
 
-% EG q - q is true in every state in some path
+% EG - Check if statement is always true in at least one state in the path
 check(_, _, S, Previous, eg(_)) :-
     member(S, Previous).
 
@@ -92,7 +92,7 @@ check(T, L, S, Previous, eg(Statement)) :-
     verify_atleast_one_adjacent(T, L, Adjacent_states, [S|Previous], eg(Statement)).
 
 
-% AF q - every path will have q true eventually
+% AF - Check if statement will eventually be true in all states in the path
 check(T, L, S, Previous, af(Statement)) :-
     \+ member(S, Previous),
     check(T, L, S, [], Statement).
@@ -102,7 +102,7 @@ check(T, L, S, Previous, af(Statement)) :-
     state_variables(T, S, Adjacent_states),
     verify_all_adjacent(T, L, Adjacent_states,[S|Previous], af(Statement)).
 
-% EF q - there exists a path where q will eventually be true
+% EF - Check if statement will eventually be true in at least one state in the path
 check(T, L, S, Previous, ef(Statement)) :-
     \+ member(S, Previous),
     check(T, L, S, [], Statement).
@@ -112,26 +112,24 @@ check(T, L, S, Previous, ef(Statement)) :-
     state_variables(T, S, Adjacent_states),
     verify_atleast_one_adjacent(T, L, Adjacent_states, [S|Previous], ef(Statement)).
 
-
-% ------------Utility methods------------
     
-% Retrieves the variables that are true for a certain state
-state_variables([[S, Variables]|_], S, Variables). % Variables gets unified
+% Get the variables of the current state
+state_variables([[S, Variables]|_], S, Variables).
 
 state_variables([_|T], S, Variables) :-
     state_variables(T, S, Variables).
 
-% Base case, if all adjacent states have been verified or the state doesn't have any transitions (to other states)
+% Base case if the state don't have any transitions (to other states)
 verify_all_adjacent(_, _, [], _, _).
 
 verify_all_adjacent(T, L, [Adjacent|Adjacent_states], Previous, F) :-
-    check(T, L, Adjacent, Previous, F), % Check if the adjacent state is true
-    verify_all_adjacent(T, L, Adjacent_states, Previous, F). % Check if the rest of the adjacent states are true
+    check(T, L, Adjacent, Previous, F), % Verify the adjacent state
+    verify_all_adjacent(T, L, Adjacent_states, Previous, F). % Verify the rest of the adjacent states
 
-% Base case, if the state don't have any transitions (to other states)
+% Base case if the state don't have any transitions (to other states)
 verify_atleast_one_adjacent(_, _, [], _, _).
 
 verify_atleast_one_adjacent(T, L, Adjacent_states, Previous, F) :-
-    member(Adjacent, Adjacent_states), % Get every adjacent state
-    check(T, L, Adjacent, Previous, F). % Check every adjacent state til one is true or all are false
+    member(Adjacent, Adjacent_states), % Check if there are any adjacent states
+    check(T, L, Adjacent, Previous, F). % Verify the adjacent state
 
