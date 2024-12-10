@@ -16,8 +16,6 @@
 % To run all tests:
 % ['run_all_tests.pl'].
 % run_all_tests('verify.pl').
-%
-
 
 % Read and verify input
 verify(Input) :-
@@ -27,7 +25,7 @@ verify(Input) :-
     read(S),
     read(F),
     seen,
-    check(T, L, S, [], F).
+    check(T, L, S, [], F). % Start with an empty list of previous states
 
 
 % AX (All Next): Sant i alla direkta efterföljande tillstånd.
@@ -48,7 +46,7 @@ check(_, L, S, [], neg(Literal)) :-
     \+ member(Literal, Variables).
 
 
-% And
+% And - Both statements must be true
 check(T, L, S, [], and(Statement1, Statement2)) :-
     check(T, L, S, [], Statement1),
     check(T, L, S, [], Statement2).
