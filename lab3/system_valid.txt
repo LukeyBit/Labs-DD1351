@@ -6,7 +6,7 @@
  [all_red_2, [cars_green]]].
 
 
-[[cars_green, [and(cars_go, ped_stop)]],
+[[cars_green, [cars_go, ped_stop]],
  [cars_yellow, [cars_slow, ped_stop]],
  [all_red_1, [cars_stop, ped_stop]],
  [ped_green, [cars_stop, ped_go]],
