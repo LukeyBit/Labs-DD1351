@@ -31,10 +31,11 @@ verify(Input) :-
 
 
 % AX (All Next): Sant i alla direkta efterföljande tillstånd.
-% EX (Exists Next): Sant i minst ett direkt efterföljande tillstånd.    
-% AF (All Finally): Kommer att vara sant någon gång i framtiden på alla vägar.    
-% EF (Exists Finally): Kommer att vara sant någon gång i framtiden på minst en väg.    
-% AG (All Globally): Alltid sant på alla vägar.    
+% AF (All Finally): Kommer att vara sant någon gång i framtiden på alla vägar.
+% AG (All Globally): Alltid sant på alla vägar.
+
+% EX (Exists Next): Sant i minst ett direkt efterföljande tillstånd.
+% EF (Exists Finally): Kommer att vara sant någon gång i framtiden på minst en väg.
 % EG (Exists Globally): Alltid sant på minst en väg.
 
 % Literals/atoms are true if they are in the labeling of the current state
